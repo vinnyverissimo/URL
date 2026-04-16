@@ -1,14 +1,11 @@
 from datetime import datetime
 import hashlib
 from app.db.db import get_table
-from pydantic import BaseModel, HttpUrl
+from app.schemas.util import URLRequest
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Request
 from fastapi.responses import RedirectResponse
 
 router = APIRouter()
-
-class URLRequest(BaseModel):
-    long_url: HttpUrl
 
 @router.get("/healthcheck")
 async def healthcheck():
@@ -17,11 +14,11 @@ async def healthcheck():
 @router.post("/shorten")
 async def shorten_url(url_data: URLRequest, table=Depends(get_table)):
 
-    key = hashlib.md5(url_data.long_url.encode()).hexdigest()[:7]
+    key = hashlib.md5(str(url_data.long_url).encode()).hexdigest()[:7]
 
     table.put_item(Item={
         'short_key': key, 
-        'long_url': url_data.long_url,
+        'long_url': str(url_data.long_url),
         'creation_date': datetime.now().isoformat()
     })
     
